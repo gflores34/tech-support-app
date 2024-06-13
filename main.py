@@ -6,7 +6,7 @@ import customtkinter
 from drawing_finder import drawing_finder
 from PIL import Image
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 
@@ -40,15 +40,16 @@ class App(customtkinter.CTk):
 
         #Sidebar load drawing button
         self.drawing_button = customtkinter.CTkButton(self.sidebar_frame, command=self.load_drawing, text="Drawing Finder")
-        self.drawing_button.grid(row=1, column=0, padx=20, pady=10)
+        self.drawing_button.grid(row=1, column=0, padx=20, pady=50)
 
         #Settings sidebar
-        self.settings_button = customtkinter.CTkButton(self.sidebar_frame, command=self.load_settings, text="Settings")
-        self.settings_button.grid(row=7, column=0, padx=20, pady=20)
+        settings_icon = customtkinter.CTkImage(dark_image=Image.open("./assets/icons/settings_white.png"))
+        self.settings_button = customtkinter.CTkButton(self.sidebar_frame, command=self.load_settings, text="", image=settings_icon, fg_color="transparent", width=1)
+        self.settings_button.grid(row=7, column=0, padx=20, pady=20, sticky="w")
 
         # create textbox
-        self.textbox = customtkinter.CTkTextbox(self, width=250)
-        self.textbox.grid(row=0, column=1, rowspan = 3, columnspan = 3,padx=(20, 20), pady=(20, 20), sticky="nsew")
+        self.textbox = customtkinter.CTkTextbox(self, width=250, bg_color="transparent")
+        self.textbox.grid(row=0, column=1, rowspan = 3, columnspan = 3, sticky="nsew")
         
         self.textbox.insert("0.0",
         """
@@ -57,7 +58,6 @@ class App(customtkinter.CTk):
             -Custom directory to search
 
         -Settings
-            -Light/Dark mode
             -Scaling
         
         """)
@@ -66,8 +66,8 @@ class App(customtkinter.CTk):
 
 
         #Drawing Finder frame
-        self.drawing_finder_frame = customtkinter.CTkFrame(self, width=250)
-        self.drawing_finder_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,padx=(20, 20), pady=(20, 20), sticky="nsew")
+        self.drawing_finder_frame = customtkinter.CTkFrame(self, width=250, fg_color="gray12")
+        self.drawing_finder_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,sticky="nsew")
         self.drawing_finder_frame.grid_columnconfigure((0,1,2), weight=0)
         self.drawing_finder_frame.grid_rowconfigure((0,1,2), weight=0)
 
@@ -88,27 +88,17 @@ class App(customtkinter.CTk):
 
 
         #SETTINGS FRAME
-        self.settings_frame = customtkinter.CTkFrame(self, width=250)
+        self.settings_frame = customtkinter.CTkFrame(self, width=250, fg_color="gray12")
         self.settings_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,padx=(20, 20), pady=(20, 20), sticky="nsew")
         self.settings_frame.grid_rowconfigure((0,1,2), weight = 0)
         self.settings_frame.grid_columnconfigure((0,1,2), weight = 0)
 
-
-        #Appearance section of settings
-        self.appearance_label = customtkinter.CTkLabel(self.settings_frame, text="Appearance", anchor="center", font=("Arial", 20))
-        self.appearance_label.grid(row=0, column=0, padx=20, pady=20)
-
-        self.appearance_optionemenu = customtkinter.CTkOptionMenu(self.settings_frame, values=["Light", "Dark", "System"],
-                                                                       command=self.change_appearance_mode_event)
-        self.appearance_optionemenu.grid(row=0, column=1, padx=20, pady=20)
-
-
         #Scaling 
         self.scaling_label = customtkinter.CTkLabel(self.settings_frame, text="UI Scaling", anchor="center", font=("Arial", 20))
-        self.scaling_label.grid(row=1, column=0, padx=20, pady=20)
+        self.scaling_label.grid(row=0, column=0, padx=20, pady=20)
         self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.settings_frame, values=["80%", "90%", "100%", "110%", "120%"],
                                                                command=self.change_scaling_event)
-        self.scaling_optionemenu.grid(row=1, column=1, padx=20, pady=20)
+        self.scaling_optionemenu.grid(row=0, column=1, padx=20, pady=20)
 
         self.settings_frame.grid_forget()
 
@@ -152,13 +142,13 @@ class App(customtkinter.CTk):
         self.reset_frames()
         self.reset_buttons()
         self.drawing_button.configure(border_width=3 ,border_color="yellow")
-        self.drawing_finder_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,padx=(20, 20), pady=(20, 20), sticky="nsew")
+        self.drawing_finder_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,sticky="nsew")
 
     def load_settings(self):
         self.reset_frames()
         self.reset_buttons()
         self.settings_button.configure(border_width=3 ,border_color="yellow")
-        self.settings_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,padx=(20, 20), pady=(20, 20), sticky="nsew")
+        self.settings_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3, sticky="nsew")
 
 
 if __name__ == "__main__":
