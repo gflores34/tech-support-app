@@ -4,7 +4,9 @@ import tkinter.filedialog
 import tkinter.messagebox
 import customtkinter
 from drawing_finder import drawing_finder
-from PIL import Image
+from PIL import Image, ImageTk
+import fitz
+
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -66,10 +68,10 @@ class App(customtkinter.CTk):
 
 
         #Drawing Finder frame
-        self.drawing_finder_frame = customtkinter.CTkFrame(self, width=250, fg_color="gray12")
+        self.drawing_finder_frame = customtkinter.CTkFrame(self, width=250, fg_color="blue")
         self.drawing_finder_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,sticky="nsew")
         self.drawing_finder_frame.grid_columnconfigure((0,1,2), weight=0)
-        self.drawing_finder_frame.grid_rowconfigure((0,1,2), weight=0)
+        self.drawing_finder_frame.grid_rowconfigure((0,1,2,3,4,5), weight=0)
 
 
         folder_icon = customtkinter.CTkImage(dark_image=Image.open("./assets/icons/folder_white.png"))
@@ -77,12 +79,16 @@ class App(customtkinter.CTk):
         self.set_dir_button.grid(row=0, column=1, padx=(20,0), pady=20)
 
         self.drawing_dir_label = customtkinter.CTkEntry(self.drawing_finder_frame, font=("Arial", 12), width=300, textvariable=self.drawing_directory, state=DISABLED)
-        self.drawing_dir_label.grid(row=0, column=2, padx=(5,10), pady=20)
+        self.drawing_dir_label.grid(row=0, column=1, padx=(5,10), pady=20)
 
         
         search_icon = customtkinter.CTkImage(dark_image=Image.open("./assets/icons/search_white.png"))
         self.search_button = customtkinter.CTkButton(self.drawing_finder_frame, text="",command= self.open_input_dialog_event, anchor="w", image= search_icon, width=1)
-        self.search_button.grid(row=0, column=3, padx=0, pady=20)
+        self.search_button.grid(row=0, column=1, padx=0, pady=20)
+
+        self.pdf_frame = customtkinter.CTkFrame(self.drawing_finder_frame, width=250, height=1000, fg_color="white", border_width=5, border_color= "purple")
+        self.pdf_frame.grid(row = 1, column=1, rowspan = 4,columnspan = 3)
+        self.read_pdf("C:/Users/g/Documents/jobhunt/gerardo.flores-resume.pdf")    
 
         self.drawing_finder_frame.grid_forget()
 
@@ -101,6 +107,60 @@ class App(customtkinter.CTk):
         self.scaling_optionemenu.grid(row=0, column=1, padx=20, pady=20)
 
         self.settings_frame.grid_forget()
+
+
+
+
+    def read_pdf(self, file_location):
+        doc = fitz.open(file_location)
+
+        zoom = 2
+        mat = fitz.Matrix(zoom, zoom)
+
+        num_pages = 0
+        for p in doc:
+            num_pages += 1
+
+        scrollbar = Scrollbar(self.pdf_frame)
+        canvas = Canvas(self.pdf_frame, yscrollcommand= scrollbar.set,height=1000, width=1000)
+        canvas.pack(side = LEFT, fill = BOTH, expand = 10)
+
+        entry = Entry(self.pdf_frame)
+        label = Label(self.pdf_frame, text="Enter page number to display:")
+
+        def pdf_to_img(page_num):
+            page = doc.load_page(page_num)
+            pix = page.get_pixmap(matrix=mat)
+            return Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        
+        def show_image():
+            try:
+                page_num = int(entry.get()) - 1
+                assert page_num >= 0 and page_num < num_pages
+                im = pdf_to_img(page_num)
+                img_tk = ImageTk.PhotoImage(im)
+                frame = Frame(canvas)
+                panel = Label(frame, image=img_tk)
+                panel.pack(side="bottom", fill="both", expand="yes")
+                frame.image = img_tk
+                canvas.create_window(0, 0, anchor='nw', window=frame)
+                frame.update_idletasks()
+                canvas.config(scrollregion=canvas.bbox("all"))
+            except:
+                pass
+        
+        button = Button(self.pdf_frame, text="Show Page", command=show_image)
+
+
+        label.pack(side=TOP, fill=None)
+        entry.pack(side=TOP, fill=BOTH)
+        button.pack(side=TOP, fill=None)
+
+        entry.insert(0, '1')
+        show_image()
+
+        scrollbar.config(command = canvas.yview)
+        doc.close
 
 
     def reset_buttons(self):
@@ -142,7 +202,7 @@ class App(customtkinter.CTk):
         self.reset_frames()
         self.reset_buttons()
         self.drawing_button.configure(border_width=3 ,border_color="yellow")
-        self.drawing_finder_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,sticky="nsew")
+        self.drawing_finder_frame.grid(row=0, column=1, rowspan = 5, columnspan = 5,sticky="nsew")
 
     def load_settings(self):
         self.reset_frames()
