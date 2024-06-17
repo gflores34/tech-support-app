@@ -7,29 +7,59 @@ from CTkMessagebox import CTkMessagebox
 from drawing_finder import drawing_finder
 from PIL import Image, ImageTk
 import os
+import subprocess
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
-class PDFViewer:
-    def __init__(self, master):
-        pass
+class ToplevelWindow(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("300x150")\
 
-    
+        self.label = customtkinter.CTkLabel(self, text="Enter Drawing number:")
+        self.label.pack(padx=10, pady=15)
+
+        self.dwg_number_entry = customtkinter.CTkEntry(self)
+        self.dwg_number_entry.pack()
+
+        search_icon = customtkinter.CTkImage(dark_image=Image.open("./assets/icons/search_white.png"))
+        self.dwg_submit_button = customtkinter.CTkButton(self, image=search_icon, text="search", command=self.find_drawing)
+        self.dwg_submit_button.pack(pady=15)
+        
+
+    def find_drawing(self):
+        
+
+        if(len(self.dwg_number_entry.get()) == 0):
+            
+            CTkMessagebox(title="Error", message="Drawing text box empty", icon="cancel")
+        else:
+            result = drawing_finder(shared_dir.get(), self.dwg_number_entry.get())
+
+            if len(result) == 0:
+                CTkMessagebox(title="Error", message="File " + self.dwg_number_entry.get() + " could not be found", icon="cancel")
+            else:
+                subprocess.Popen(result[0], shell=True)
+
 
 class App(customtkinter.CTk):
 
     def __init__(self):
         super().__init__()
         
+        global shared_dir
+
         self.drawing_directory = StringVar()
-        self.drawing_directory.set("E:/repos/work-app/dwg")
+        self.drawing_directory.set("R:/Dwg")
+
+        shared_dir = self.drawing_directory
 
         # configure window
         self.title("DETEX APP")
         self.geometry(f"{1358}x{764}")
         self.resizable(width=False, height=False)
-        self.attributes('-topmost', True)
+        #self.attributes('-topmost', True)
 
         # configure grid layout (4x4)
         self.grid_columnconfigure(1, weight=1)
@@ -51,34 +81,27 @@ class App(customtkinter.CTk):
         self.drawing_button = customtkinter.CTkButton(self.sidebar_frame, command=self.load_drawing, text="Drawing Finder")
         self.drawing_button.grid(row=1, column=0, padx=20, pady=50)
 
-        #Sidebar load drawing button
-        self.formatter_button = customtkinter.CTkButton(self.sidebar_frame, command=self.load_formatter, text="Text Formatter")
-        self.formatter_button.grid(row=2, column=0, padx=20, pady=0)
-
         #Settings sidebar
         settings_icon = customtkinter.CTkImage(dark_image=Image.open("./assets/icons/settings_white.png"))
         self.settings_button = customtkinter.CTkButton(self.sidebar_frame, command=self.load_settings, text="", image=settings_icon, fg_color="transparent", width=1)
         self.settings_button.grid(row=7, column=0, padx=20, pady=20, sticky="w")
 
+
+        #--------------------------------------PATCHNOTES---------------------------------------------#
         # create textbox
         self.textbox = customtkinter.CTkTextbox(self, width=250, bg_color="transparent")
         self.textbox.grid(row=0, column=1, rowspan = 3, columnspan = 3, sticky="nsew")
-        
-        self.textbox.insert("0.0",
-        """
-        Version 0.0.1
-        -Drawing Finder
-            -Custom directory to search
 
-        -Settings
-            -Scaling
-        
-        """)
+        v0_0_2 = [["Drawing Finder", "Will find and Open drawings", "Search window remains on top to make searching for additio nal files easier"]]
+        self.patch_notes_formatter(self.textbox, "0.0.2", v0_0_2)
+
+        v0_0_1 = [["Drawing Finder", "Custom directory to search"],["Settings", "Scaling"]]
+        self.patch_notes_formatter(self.textbox, "0.0.1", v0_0_1)
 
         self.textbox.configure(state="disabled")
 
 
-        #Drawing Finder frame
+        #------------------------DRAWING FRAME----------------------------------#
         self.drawing_finder_frame = customtkinter.CTkFrame(self, fg_color="gray12")
         self.drawing_finder_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,sticky="nsew")
         self.drawing_finder_frame.grid_columnconfigure((0,1,2,3,4), weight=0)
@@ -94,44 +117,17 @@ class App(customtkinter.CTk):
 
         
         search_icon = customtkinter.CTkImage(dark_image=Image.open("./assets/icons/search_white.png"))
-        self.search_button = customtkinter.CTkButton(self.drawing_finder_frame, text="",command= self.open_input_dialog_event, anchor="w", image= search_icon, width=1)
+        self.search_button = customtkinter.CTkButton(self.drawing_finder_frame, text="",command= self.open_drawing_search, anchor="w", image= search_icon, width=1)
         self.search_button.grid(row=0, column=3, padx=0, pady=50, sticky="n")
+
+        self.drawing_search = None
 
         self.drawing_finder_frame.grid_forget()
 
-        #-------------------TEXT FORMATTER---------------------#
-        self.text_formatter_frame = customtkinter.CTkFrame(self, fg_color="gray12")
-        self.text_formatter_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,sticky="nsew")
-        self.text_formatter_frame.grid_columnconfigure((0,1,2,3,4), weight=0)
-        self.text_formatter_frame.grid_rowconfigure((0,1,2,3,4,5), weight=0)
 
-        self.formatter_label = customtkinter.CTkLabel(self.text_formatter_frame, font = ("Arial", 24),text="Enter notes below\nPreferably in the format shown")
-        self.formatter_label.grid(row=0, column=0, columnspan=3, pady=20)
-
-        self.text_box = customtkinter.CTkTextbox(self.text_formatter_frame, width=500, height=500, border_width=2, border_color= "cyan")
-        self.text_box.insert(index=INSERT ,text="Call# 123456\nWO 02123456\nHD 0001",tags=None)
-        self.text_box.grid(row=1, column=0, columnspan=2, rowspan=3, padx=(20,0))
-
-        self.submit_button = customtkinter.CTkButton(self.text_formatter_frame, text="submit", fg_color="green", text_color="gray12")
-        self.submit_button.grid(row=4, column=1, sticky="e", pady=20)
-
-
-        self.call_label = customtkinter.CTkLabel(self.text_formatter_frame, text="Call#")
-        self.call_label.grid(row=1, column=2, padx=(20,0), sticky="n")
-        self.call_entry = customtkinter.CTkEntry(self.text_formatter_frame)
-        self.call_entry.grid(row=1, column=3, padx=(10,0), sticky="n")
-
-        self.work_order_label = customtkinter.CTkLabel(self.text_formatter_frame, text="Work Order")
-        self.work_order_label.grid(row=2, column=2, padx=(20,0), sticky="n")
-        self.work_order_entry = customtkinter.CTkEntry(self.text_formatter_frame)
-        self.work_order_entry.grid(row=2, column=3, padx=(10,0), sticky="n")
-
-        self.text_formatter_frame.grid_forget()
-
-
-        #SETTINGS FRAME
+        #----------------------------------SETTINGS FRAME---------------------------------------------------#
         self.settings_frame = customtkinter.CTkFrame(self, fg_color="gray12")
-        self.settings_frame.grid(row=0, column=1, rowspan = 3, columnspan = 3,padx=(20, 20), pady=(20, 20), sticky="nsew")
+        self.settings_frame.grid(row=0, column=1, rowspan = 5, columnspan = 5, sticky="nsew")
         self.settings_frame.grid_rowconfigure((0,1,2), weight = 0)
         self.settings_frame.grid_columnconfigure((0,1,2), weight = 0)
 
@@ -144,17 +140,23 @@ class App(customtkinter.CTk):
 
         self.settings_frame.grid_forget()
 
+    def patch_notes_formatter(self, widget, version, notes):
+        widget.insert("end", "\tv" + version + "\n\n")
 
+        for a in range(len(notes)):
+            widget.insert("end", "\t-" + notes[a][0] + "\n", "h2")
+            for b in range(len(notes[a]) - 1):
+                widget.insert("end", "\t        -" + notes[a][b + 1] + "\n\n", "p")
+
+        widget.insert("end", "\n\n\n")
 
     def reset_buttons(self):
         self.drawing_button.configure(border_width=0 ,border_color="")
         self.settings_button.configure(border_width=0 ,border_color="")
-        self.formatter_button.configure(border_width=0 ,border_color="")
 
     def reset_frames(self):
         self.drawing_finder_frame.grid_forget()
         self.settings_frame.grid_forget()
-        self.text_formatter_frame.grid_forget()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -176,24 +178,27 @@ class App(customtkinter.CTk):
         if len(result) == 0:
             CTkMessagebox(title="Error", message="File " + pattern + " could not be found", icon="cancel")
         else:
-            print(result)
+            subprocess.Popen(result[0], shell=True)
 
     def open_input_dialog_event(self):
         dialog = customtkinter.CTkInputDialog(text="Type in a drawing number:", title="Drawing Search")
 
         self.find_drawing(self.drawing_directory.get(), dialog.get_input())
 
+    def open_drawing_search(self):
+        if self.drawing_search is None or not self.drawing_search.winfo_exists():
+            self.drawing_search = ToplevelWindow(self)
+        else:
+            self.drawing_search.focus()
+
+        self.drawing_search.title("Drawing Finder")
+        self.drawing_search.attributes('-topmost', True)
+
     def load_drawing(self):
         self.reset_frames()
         self.reset_buttons()
         self.drawing_button.configure(border_width=3 ,border_color="cyan")
         self.drawing_finder_frame.grid(row=0, column=1, rowspan = 5, columnspan = 5,sticky="nsew")
-
-    def load_formatter(self):
-        self.reset_frames()
-        self.reset_buttons()
-        self.formatter_button.configure(border_width=3 ,border_color="cyan")
-        self.text_formatter_frame.grid(row=0, column=1, rowspan = 5, columnspan = 5,sticky="nsew")
 
     def load_settings(self):
         self.reset_frames()
